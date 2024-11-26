@@ -41,7 +41,7 @@ public class TaskServiceImpl implements TaskService {
         log.info(taskResponse.toString());
         task = taskRepository.save(task);
 
-        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString(), task.getDescription());
+        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(), task.getStatus().toString(), task.getDescription());
 
         return taskResponse1;
     }
@@ -51,10 +51,10 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse getTaskById(Long id) {
         Task task = taskRepository.findById(id).orElseThrow(
-                () -> new  EntityNotFoundException
+                () -> new EntityNotFoundException
                         ("Task with id " + id + " not found"));
 
-        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString(), task.getDescription());
+        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(), task.getStatus().toString(), task.getDescription());
         return taskResponse1;
     }
 
@@ -64,7 +64,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void deleteTask(Long id) {
         Task task = taskRepository.findById(id).orElseThrow(
-                () -> new  EntityNotFoundException
+                () -> new EntityNotFoundException
                         ("Task with id " + id + " not found"));
 
         taskRepository.delete(task);
@@ -75,7 +75,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse updateTask(Long id, TaskRequest updateTaskRequest) {
         Task task = taskRepository.findById(id).orElseThrow(
-                () -> new  EntityNotFoundException
+                () -> new EntityNotFoundException
                         ("Task with id " + id + " not found"));
 
         task.setTitle(updateTaskRequest.title());
@@ -84,8 +84,7 @@ public class TaskServiceImpl implements TaskService {
         task = taskRepository.save(task);
 
 
-
-        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString(), task.getDescription());
+        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(), task.getStatus().toString(), task.getDescription());
         return taskResponse1;
     }
 
@@ -93,7 +92,6 @@ public class TaskServiceImpl implements TaskService {
     @LogAfterReturning
     @Override
     public TaskResponse updateStatus(Long taskId, TaskStatus newStatus) {
-        // Find the task by ID
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
 
@@ -105,10 +103,9 @@ public class TaskServiceImpl implements TaskService {
         kafkaTaskProducer.sendStatusUpdate(task.getId(), newStatus);
 
 
-        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString(), task.getDescription());
+        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(), task.getStatus().toString(), task.getDescription());
         return taskResponse1;
     }
-
 
 
     @LogBefore
@@ -122,7 +119,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private TaskResponse convertToTaskResponse(Task task) {
-        TaskResponse taskResponse = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString() ,task.getDescription());
+        TaskResponse taskResponse = new TaskResponse(task.getId(), task.getTitle(), task.getStatus().toString(), task.getDescription());
         return taskResponse;
     }
 }

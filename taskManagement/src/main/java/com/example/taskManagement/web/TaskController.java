@@ -19,7 +19,6 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
-    private final KafkaTaskProducer kafkaTaskProducer;
 
     @Value("t1_demo_task_updates")
     private String taskUpdateTopic;
@@ -49,10 +48,9 @@ public class TaskController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<Void> updateTaskStatus(@PathVariable Long id, @RequestBody TaskStatus newStatus) {
+    @ResponseStatus(HttpStatus.OK)
+    public void updateTaskStatus(@PathVariable Long id, @RequestBody TaskStatus newStatus) {
         taskService.updateStatus(id, newStatus);
-        kafkaTaskProducer.sendStatusUpdate(id, newStatus);
-        return ResponseEntity.ok().build();
     }
 
 
