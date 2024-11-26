@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16.1-alpine
+    environment:
+      POSTGRES_DB: "taskManager"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      PGDATA: "/var/lib/postgres/data/pgdata"
+    volumes:
+      - ../2. Init Database:/docker-entrypoint-initdb.db
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+volumes:
+  db-data:
