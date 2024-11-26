@@ -12,3 +12,14 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
+
+  mail:
+    host: smtp.mail.ru
+    port: 587
+    username: danil.yudin
+    password: danil.yudin
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls.enable: true
