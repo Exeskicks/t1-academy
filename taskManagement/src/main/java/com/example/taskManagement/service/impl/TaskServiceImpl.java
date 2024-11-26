@@ -4,10 +4,12 @@ import com.example.taskManagement.aspect.LogAfterReturning;
 import com.example.taskManagement.aspect.LogAfterThrowing;
 import com.example.taskManagement.aspect.LogAround;
 import com.example.taskManagement.aspect.LogBefore;
+import com.example.taskManagement.common.TaskStatus;
 import com.example.taskManagement.entity.Task;
+import com.example.taskManagement.kafka.KafkaTaskProducer;
 import com.example.taskManagement.repository.TaskRepository;
 import com.example.taskManagement.service.TaskService;
-import com.example.taskManagement.web.request.NewTaskRequest;
+import com.example.taskManagement.web.request.TaskRequest;
 import com.example.taskManagement.web.respone.TaskResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -23,20 +25,23 @@ import java.util.stream.Collectors;
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
+    private final KafkaTaskProducer kafkaTaskProducer;
 
     @LogBefore
     @LogAfterThrowing
     @Override
-    public TaskResponse saveTask(NewTaskRequest taskResponse) {
+    public TaskResponse saveTask(TaskRequest taskResponse) {
 
         Task task = new Task();
+
         task.setTitle(taskResponse.title());
         task.setDescription(taskResponse.description());
+        task.setStatus(TaskStatus.valueOf(taskResponse.status()));
         task.setUserId(taskResponse.userId());
         log.info(taskResponse.toString());
         task = taskRepository.save(task);
 
-        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(), task.getDescription());
+        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString(), task.getDescription());
 
         return taskResponse1;
     }
@@ -49,7 +54,7 @@ public class TaskServiceImpl implements TaskService {
                 () -> new  EntityNotFoundException
                         ("Task with id " + id + " not found"));
 
-        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(), task.getDescription());
+        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString(), task.getDescription());
         return taskResponse1;
     }
 
@@ -68,7 +73,7 @@ public class TaskServiceImpl implements TaskService {
     @LogBefore
     @LogAfterReturning
     @Override
-    public TaskResponse updateTask(Long id, NewTaskRequest updateTaskRequest) {
+    public TaskResponse updateTask(Long id, TaskRequest updateTaskRequest) {
         Task task = taskRepository.findById(id).orElseThrow(
                 () -> new  EntityNotFoundException
                         ("Task with id " + id + " not found"));
@@ -78,10 +83,31 @@ public class TaskServiceImpl implements TaskService {
         task.setUserId(updateTaskRequest.userId());
         task = taskRepository.save(task);
 
-        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(), task.getDescription());
+
+
+        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString(), task.getDescription());
         return taskResponse1;
     }
 
+    @LogBefore
+    @LogAfterReturning
+    @Override
+    public TaskResponse updateStatus(Long taskId, TaskStatus newStatus) {
+        // Find the task by ID
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
+
+        // Update the task status
+        task.setStatus(TaskStatus.valueOf(newStatus.toString()));
+        task = taskRepository.save(task);
+
+        // Send the update to Kafka
+        kafkaTaskProducer.sendStatusUpdate(task.getId(), newStatus);
+
+
+        TaskResponse taskResponse1 = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString(), task.getDescription());
+        return taskResponse1;
+    }
 
 
 
@@ -96,7 +122,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private TaskResponse convertToTaskResponse(Task task) {
-        TaskResponse taskResponse = new TaskResponse(task.getId(), task.getTitle(), task.getDescription());
+        TaskResponse taskResponse = new TaskResponse(task.getId(), task.getTitle(),task.getStatus().toString() ,task.getDescription());
         return taskResponse;
     }
 }

@@ -1,11 +1,7 @@
 package com.example.taskManagement.entity;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.SequenceGenerator;
+import com.example.taskManagement.common.TaskStatus;
+import jakarta.persistence.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,15 +27,8 @@ public class Task {
 
     String description;
 
-    @Override
-    public String toString() {
-        return "Task{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", description='" + description + '\'' +
-                ", userId=" + userId +
-                '}';
-    }
+    @Enumerated(EnumType.STRING)
+    TaskStatus status;
 
     Long userId;
 }

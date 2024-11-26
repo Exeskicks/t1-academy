@@ -1,10 +1,14 @@
 package com.example.taskManagement.web;
 
+import com.example.taskManagement.common.TaskStatus;
+import com.example.taskManagement.kafka.KafkaTaskProducer;
 import com.example.taskManagement.service.TaskService;
-import com.example.taskManagement.web.request.NewTaskRequest;
+import com.example.taskManagement.web.request.TaskRequest;
 import com.example.taskManagement.web.respone.TaskResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,11 +19,15 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
+    private final KafkaTaskProducer kafkaTaskProducer;
+
+    @Value("t1_demo_task_updates")
+    private String taskUpdateTopic;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TaskResponse createTask(
-            @RequestBody NewTaskRequest taskRequest) {
+            @RequestBody TaskRequest taskRequest) {
         return taskService.saveTask(taskRequest);
     }
 
@@ -35,10 +43,18 @@ public class TaskController {
     @ResponseStatus(HttpStatus.OK)
     public TaskResponse updateTaskById(
             @PathVariable final Long id,
-            @RequestBody NewTaskRequest taskRequest
+            @RequestBody TaskRequest taskRequest
     ) {
         return taskService.updateTask(id, taskRequest);
     }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Void> updateTaskStatus(@PathVariable Long id, @RequestBody TaskStatus newStatus) {
+        taskService.updateStatus(id, newStatus);
+        kafkaTaskProducer.sendStatusUpdate(id, newStatus);
+        return ResponseEntity.ok().build();
+    }
+
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
