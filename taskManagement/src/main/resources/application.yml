@@ -23,3 +23,9 @@ spring:
         smtp:
           auth: true
           starttls.enable: true
+
+
+  http:
+    logging:
+      enabled: true
+      logLevel: DEBUG
